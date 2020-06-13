@@ -11,6 +11,8 @@ import java.util.Scanner;
 
 public class SalesLoader {
 
+	//YET TO BE IMPLEMENTED
+	
 	private BigDecimal priorRevenue;
 	private BigDecimal totalRevenue;
 	private int priorSalesCount = 0;

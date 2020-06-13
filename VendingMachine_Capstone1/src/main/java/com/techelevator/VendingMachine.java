@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class VendingMachine {
 
@@ -27,14 +28,14 @@ public class VendingMachine {
 	private void setBalance(BigDecimal balance) {
 		this.balance = balance.setScale(2, BigDecimal.ROUND_HALF_UP);
 	}
-	
+
 	public void displayInventory() {
 		for (Map.Entry<String, List<VendingItems>> temp : inventory.entrySet()) {
 			List<VendingItems> list = temp.getValue();
 
 			for (VendingItems v : list) {
 				if (v.getQuantity() == 0) {
-					System.out.printf(format, temp.getKey(), v.getName(), v.getPrice().toString(), v.getQuantity(),
+					System.out.printf(format, temp.getKey(), "", v.getPrice().toString(), v.getQuantity(),
 							"SOLD OUT");
 
 				} else {
@@ -42,9 +43,7 @@ public class VendingMachine {
 							"Available");
 				}
 			}
-
 		}
-
 	}
 
 	public Integer[] dispenseChange() {
@@ -77,19 +76,17 @@ public class VendingMachine {
 				pennyCount += 1;
 				setBalance(this.balance.subtract(penny));
 			}
-
-			
 			coins[0] = quarterCount;
 			coins[1] = dimeCount;
 			coins[2] = nickelCount;
 			coins[3] = pennyCount;
 
+			System.out.printf("%nNow Dispensing %s.....%n", df.format(startingBalance));
+			
 			log.write(String.format("%s GIVE CHANGE: %8.8s %8.8s", FORMATTER.format(time), df.format(startingBalance),
 					df.format(this.balance)));
-			
-		} catch (
 
-		IOException ex) {
+		} catch (IOException ex) {
 			System.out.println("IO Exception at:" + ex.getMessage());
 		} catch (Exception ex) {
 			System.out.println("General Exception at:" + ex.getMessage());
@@ -102,112 +99,109 @@ public class VendingMachine {
 		String output = "Your change is: %n";
 		if (coins[0] == 0 && coins[1] == 0 && coins[2] == 0 && coins[3] == 0) {
 			output = "Thank You for Your Business, Have a Great Day";
-		} else {	
-	
-		// more than 1 quarter
-		if (coins[0] > 1) {
-			output += coins[0] + " quarters%n";
+		} else {
+
+			// more than 1 quarter
+			if (coins[0] > 1) {
+				output += coins[0] + " quarters%n";
+			}
+			// 1 quarter
+			else if (coins[0] > 0) {
+				output += coins[0] + " quarter%n";
+			}
+			// more than 1 dime
+			if (coins[1] > 1) {
+				output += coins[1] + " dimes%n";
+			}
+			// 1 dime
+			else if (coins[1] > 0) {
+				output += coins[1] + " dime%n";
+			}
+			// 1 nickel - 2 nickels not possible
+			if (coins[2] > 0) {
+				output += coins[2] + " nickel%n";
+			}
+			// pennies - donation (machine doesn't stock pennies)
+			if (coins[3] > 1) {
+				output += "We have no pennies to return, your " + coins[3]
+						+ " pennies will be donated to a \"Good Cause\". %n";
+			}
+			// penny - donation (machine doesn't stock pennies)
+			else if (coins[3] > 0) {
+				output += "We have no pennies to return, your penny will be donated to a \"Good Cause\". %n";
+			}
 		}
-		// 1 quarter
-		else if (coins[0] > 0) {
-			output += coins[0] + " quarter%n";
-		}
-		// more than 1 dime
-		if (coins[1] > 1) {
-			output += coins[1] + " dimes%n";
-		}
-		// 1 dime
-		else if (coins[1] > 0) {
-			output += coins[1] + " dime%n";
-		}
-		// 1 nickel - 2 nickels not possible
-		if (coins[2] > 0) {
-			output += coins[2] + " nickel%n";
-		}
-		// pennies
-		if (coins[3] > 1) {
-			output += 
-					"We have no pennies to return, your " + coins[3] + " pennies will be donated to a \"Good Cause\". %n";
-		}
-		// penny
-		else if (coins[3] > 0) {
-			output += "We have no pennies to return, your penny will be donated to a \"Good Cause\". %n";
-		}
-		}
-		
+
 		return output;
 
 	}
+
 	public String getUserInputforItemSelection() {
-			boolean loop = false;
-			String userInput = "";
+		boolean loop = false;
+		String userInput = "";
 
-			displayInventory();
-			System.out.println();
-			System.out.println("Please Select An Item (For Example A1) or Enter E to Exit: ");
+		displayInventory();
+		System.out.println();
+		System.out.println("Please Select An Item (For Example A1) or Enter E to Exit: ");
 
-			while (loop == false) {
+		while (loop == false) {
 
-				Scanner input = new Scanner(System.in);
-				userInput = input.nextLine().toUpperCase();
-				if (userInput.contentEquals("E") || userInput.contentEquals("e")) {
-					loop = true;
-				} else {
-					for (Map.Entry<String, List<VendingItems>> temp : inventory.entrySet()) {
-						if (userInput.contentEquals(temp.getKey())) {
-							if (inventory.get(userInput).get(0).getQuantity() > 0
-									&& this.balance.subtract(inventory.get(userInput).get(0).getPrice())
-											.compareTo(BigDecimal.ZERO) >= 0) {
-								loop = true;
-							}
+			Scanner input = new Scanner(System.in);
+			userInput = input.nextLine().toUpperCase();
+			if (userInput.contentEquals("E") || userInput.contentEquals("e")) {
+				loop = true;
+			} else {
+				for (Map.Entry<String, List<VendingItems>> temp : inventory.entrySet()) {
+					if (userInput.contentEquals(temp.getKey())) {
+						if (inventory.get(userInput).get(0).getQuantity() > 0 && this.balance
+								.subtract(inventory.get(userInput).get(0).getPrice()).compareTo(BigDecimal.ZERO) >= 0) {
+							loop = true;
 						}
 					}
 				}
 			}
-				if (loop == false) {
-					displayInventory();
-					System.out.println("\n*** \nSorry " + userInput + " is sold out or is not a valid option\n***");
-					System.out.println("Please make another selection (For Example A1) or Enter E to Exit");
+			if (loop == false) {
+				displayInventory();
+				System.out.println("\n*** \nSorry " + userInput + " is sold out or is not a valid option\n***");
+				System.out.println("Please make another selection (For Example A1) or Enter E to Exit");
 
 			}
-			return userInput;
+
 		}
-	
+		return userInput;
+	}
+
 	public void dispenseItem(String userInput) {
 		try (MachineLog log = new MachineLog("c:\\data\\log.txt");) {
 			BigDecimal startingBalance = this.balance;
-			SalesLoader sloader = new SalesLoader();
-			boolean loop = false;
+			boolean isLooping = true;
 			displayInventory();
 			System.out.println();
 			System.out.println("Please Select An Item (For Example A1) or Enter E to Exit: ");
-			while (loop == false) {
+			while (isLooping == true) {
 
 				if (userInput.contentEquals("E") || userInput.contentEquals("e")) {
-					loop = true;
+					isLooping = false;
 				} else {
-					//Update Machine Money Balance			
+					// Update Machine Money Balance
 					setBalance(this.balance.subtract(inventory.get(userInput).get(0).getPrice()));
-								
-					//Update Machine Inventory			
-					inventory.get(userInput).get(0).dispenseVendingItem();;
 
-								System.out.printf(
-										"Now Dispensing %s which cost $ %s. Your remaining balance is $ %s.%n",
-										inventory.get(userInput).get(0).getName(),
-										inventory.get(userInput).get(0).getPrice(), this.balance.toString());
-								System.out.println(inventory.get(userInput).get(0).getSlogan());
-								log.write(String.format("%s %-9.8s %s %8.8s %8.8s", FORMATTER.format(time),
-										inventory.get(userInput).get(0).getName(), userInput,
-										df.format(startingBalance), df.format(this.balance)));
-								sloader.updateSalesReport(inventory.get(userInput).get(0).getName(), 1, inventory.get(userInput).get(0).getPrice());
-								
-								loop = true;
-						}
-					}
-		} catch (
+					// Update Machine Inventory
+					inventory.get(userInput).get(0).dispenseVendingItem();
+					;
 
-		IOException ex) {
+					System.out.printf("Now Dispensing %s which cost $ %s. Your remaining balance is $ %s.%n",
+							inventory.get(userInput).get(0).getName(), inventory.get(userInput).get(0).getPrice(),
+							this.balance.toString());
+					System.out.println(inventory.get(userInput).get(0).getSlogan());
+					log.write(String.format("%s %-9.8s %s %8.8s %8.8s", FORMATTER.format(time),
+							inventory.get(userInput).get(0).getName(), userInput, df.format(startingBalance),
+							df.format(this.balance)));
+
+					isLooping = false;
+				}
+			}
+		} catch (IOException ex) {
 			System.out.println("IO Exception at:" + ex.getMessage());
 		} catch (Exception ex) {
 			System.out.println("General Exception at:" + ex.getMessage());
@@ -217,7 +211,16 @@ public class VendingMachine {
 
 	public void feedMoney(BigDecimal bill) {
 		try (MachineLog log = new MachineLog("c:\\data\\log.txt");) {
-			if (bill.compareTo(BigDecimal.ZERO) > 0) {
+
+			double random = (Math.random() * 100);
+			if (random > 98) {
+				// random bill eater
+				System.out.printf("%nSometimes I can't control myself and just eat bills, thanks for the $%s bill. %n", bill.toString());
+			} else if (random > 70) {
+				// random denier for crinkly bills
+				System.out.printf("%nThat Bill is WAY TOO CRINKLY, Please Iron it Flat and Reinsert.%n");
+			} else if (bill.compareTo(BigDecimal.ZERO) > 0) {
+				// bill processor
 				setBalance(balance.add(bill));
 				System.out.printf("%nYou inserted a $%s bill.%n", bill.toString());
 				System.out.printf("You have inserted a total of $%s.%n", balance.toString());
@@ -227,9 +230,7 @@ public class VendingMachine {
 				System.out.println("Invalid bill inserted");
 			}
 
-		} catch (
-
-		IOException ex) {
+		} catch (IOException ex) {
 			System.out.println("IO Exception at:" + ex.getMessage());
 		} catch (Exception ex) {
 			System.out.println("General Exception at:" + ex.getMessage());
@@ -238,6 +239,20 @@ public class VendingMachine {
 
 	public BigDecimal getBalance() {
 		return balance;
+	}
+	
+	public void shakeMachine() throws InterruptedException {
+		int random = (int)(Math.random() * 8 );
+		Shakers shake = new Shakers();
+
+		System.out.printf("%n%nReally?  That's how it's gonna be?%n");
+		
+		if (random > 5) {
+			shake.shakeSuccess();
+		} else {
+			shake.shakeFailure();
+		}
+		
 	}
 
 }

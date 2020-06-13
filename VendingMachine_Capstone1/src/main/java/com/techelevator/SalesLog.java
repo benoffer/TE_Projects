@@ -12,6 +12,8 @@ import java.time.format.DateTimeFormatter;
 
 public class SalesLog implements Closeable, Loggers {
 
+	// YET TO BE IMPLEMENTED
+	
 	private File salesFile;
 	private PrintWriter writer;
 	DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a");
